@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Search, Briefcase, Download, Filter } from 'lucide-react';
 import UserManagement from '@/components/UserManagement'; // Updated path
+import { useAuth } from '@/context/AuthContext';
 
 interface JobListing {
   uid: string;
@@ -28,6 +29,42 @@ const JobList = () => {
   const [error, setError] = useState<string | null>(null);
   const [showCompanyPopup, setShowCompanyPopup] = useState(false);
   const [companyTypeFilter, setCompanyTypeFilter] = useState<string>('All');
+  const [pageLoading, setPageLoading] = useState(true);
+  const { user, loading: authLoading } = useAuth(); // Get user and loading state from context
+
+  useEffect(() => {
+    if (!authLoading) {
+      if (!user || !(user.isAdmin || user.isTempAdmin)) {
+        console.log("Auth check failed: No user or not admin. Redirecting to login.");
+        router.push('/login'); 
+      } else {
+        setPageLoading(false); 
+      }
+    }
+  }, [user, authLoading, router]);
+
+  useEffect(() => {
+    // Only fetch data if the user is authorized (pageLoading is false)
+    if (!pageLoading) {
+      const fetchJobListings = async () => {
+        setLoading(true); // Use the original loading state for data fetching
+        setError(null);
+        try {
+          const response = await fetch('http://localhost:8000/get-data');
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          const result = await response.json();
+          setJobListings(result.data);
+        } catch (err) {
+          setError(err instanceof Error ? err.message : 'An unknown error occurred');
+        } finally {
+          setLoading(false); // Set original loading state to false after fetch
+        }
+      };
+      fetchJobListings();
+    }
+  }, [pageLoading]);
 
   // Define salary ranges
   const salaryRanges = [
@@ -166,11 +203,13 @@ const JobList = () => {
     document.body.removeChild(link);
   };
 
-  if (loading) return (
+  if (pageLoading || loading) return ( 
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-50 flex items-center justify-center">
       <div className="text-center">
         <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
-        <p className="mt-4 text-lg font-medium text-gray-700">Loading premium opportunities...</p>
+        <p className="mt-4 text-lg font-medium text-gray-700">
+          {pageLoading ? "Authenticating..." : "Loading premium opportunities..."}
+        </p>
       </div>
     </div>
   );

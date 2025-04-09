@@ -69,7 +69,7 @@ const Login: React.FC = () => {
 
       // 3. Redirect based on role
       if (data.isAdmin || data.isTempAdmin) {
-        router.push(data.isTempAdmin ? '/sup-home' : '/adminsearch');
+        router.push('/adminsearch');
       } else {
         router.push('/user');
       }

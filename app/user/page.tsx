@@ -1,7 +1,6 @@
 "use client"
 import React from 'react';
-import { ProtectedRoute } from '@/components/ProtectedRoute';
-
+import ProtectedRoute from '@/components/ProtectedRoute';
 const UserPage = () => {
   return (
     <ProtectedRoute>
