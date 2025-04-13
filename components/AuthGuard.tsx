@@ -5,97 +5,108 @@ import { useAuth } from '@/context/AuthContext';
 import { useRouter, usePathname } from 'next/navigation';
 
 // Define paths accessible without login
-const publicPaths = ['/login', '/signup'];
+const publicPaths = ['/login', '/signup', '/forgot-password'];
 // Define base paths allowed for each role
-const tempAdminBasePaths = ['/sup-home'];
-const userBasePaths = ['/user'];
-// Define base paths allowed for regular admins (adjust as needed)
-// Admins can typically access their own routes AND potentially user routes, but not temp admin routes.
-const adminBasePaths = ['/adminsearch', '/admin', '/Terms', '/adminedit']; 
-
-// Helper function to check if current path starts with any allowed base path
-const isPathAllowed = (pathname: string, allowedBasePaths: string[]): boolean => {
-  return allowedBasePaths.some(basePath => pathname.startsWith(basePath));
-};
+const tempAdminBasePaths = ['/tempadmin','/Admin', '/Terms', '/adminedit'];
+const userBasePaths = ['/user', '/UTerms'];
+const adminBasePaths = ['/adminsearch', '/Admin', '/Terms', '/adminedit']; 
 
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
-  // State to manage whether the initial check is complete and access is granted
-  const [isChecking, setIsChecking] = useState(true); 
+  const [isChecking, setIsChecking] = useState(true);
+
+  // Enhanced path checking function
+  const isPathAllowed = (pathname: string, allowedBasePaths: string[]): boolean => {
+    return allowedBasePaths.some(basePath => pathname.startsWith(basePath));
+  };
+
+  // Comprehensive logout and redirect function
+  const forceLogout = async () => {
+    try {
+      // Clear client-side storage
+      localStorage.clear();
+      sessionStorage.clear();
+      
+      // Call auth context logout if available
+      if (typeof logout === 'function') {
+        await logout();
+      }
+      
+      // Force full page reload to reset all state
+      window.location.href = '/login';
+    } catch (error) {
+      console.error('Logout failed:', error);
+      window.location.href = '/login';
+    }
+  };
 
   useEffect(() => {
-    // Don't run checks until auth state is loaded
     if (authLoading) {
-      setIsChecking(true); // Still checking
+      setIsChecking(true);
       return;
     }
 
-    const pathIsPublic = isPathAllowed(pathname, publicPaths);
+    const pathIsPublic = publicPaths.includes(pathname);
+    let shouldLogout = false;
     let redirectPath: string | null = null;
 
-    // --- Case 1: No user logged in ---
+    // Case 1: No user logged in
     if (!user) {
       if (!pathIsPublic) {
-        console.log(`AuthGuard: Not logged in, accessing protected path (${pathname}). Redirecting to /login.`);
+        console.log(`AuthGuard: Not logged in, accessing protected path (${pathname})`);
         redirectPath = '/login';
       }
-      // If path IS public and no user, allow access (do nothing)
     } 
-    // --- Case 2: User is logged in ---
+    // Case 2: User is logged in
     else {
-      // If logged-in user tries to access public paths, redirect them
+      // Check if accessing public path while logged in
       if (pathIsPublic) {
-        console.log(`AuthGuard: Logged in, accessing public path (${pathname}). Redirecting to dashboard.`);
-        if (user.isAdmin) redirectPath = '/adminsearch'; // Or '/admin'
-        else if (user.isTempAdmin) redirectPath = '/sup-home';
+        console.log(`AuthGuard: Logged in, accessing public path (${pathname})`);
+        if (user.isAdmin) redirectPath = '/adminsearch';
+        else if (user.isTempAdmin) redirectPath = '/tempadmin';
         else redirectPath = '/user';
-      } 
-      // Check role access for protected paths
+      }
+      // Check role-based access for protected paths
       else {
-        if (user.isTempAdmin) {
-          if (!isPathAllowed(pathname, tempAdminBasePaths)) {
-            console.log(`AuthGuard: TempAdmin accessing unauthorized path (${pathname}). Redirecting to /sup-home.`);
-            redirectPath = '/sup-home';
-          }
-        } else if (user.isAdmin) {
-          // Allow admins access to admin paths AND user paths, but NOT temp admin paths
-          const allowedPathsForAdmin = [...adminBasePaths, ...userBasePaths]; 
-          if (!isPathAllowed(pathname, allowedPathsForAdmin) || isPathAllowed(pathname, tempAdminBasePaths)) {
-             console.log(`AuthGuard: Admin accessing unauthorized path (${pathname}). Redirecting to /adminsearch.`);
-             redirectPath = '/adminsearch'; // Or '/admin'
-          }
-        } else { // Regular user
-          if (!isPathAllowed(pathname, userBasePaths)) {
-            console.log(`AuthGuard: User accessing unauthorized path (${pathname}). Redirecting to /user.`);
-            redirectPath = '/user';
-          }
+        if (user.isTempAdmin && !isPathAllowed(pathname, tempAdminBasePaths)) {
+          console.log(`AuthGuard: TempAdmin unauthorized access (${pathname})`);
+          shouldLogout = true;
+        } else if (user.isAdmin && 
+                  (!isPathAllowed(pathname, [...adminBasePaths, ...userBasePaths]) || 
+                   isPathAllowed(pathname, tempAdminBasePaths))) {
+          console.log(`AuthGuard: Admin unauthorized access (${pathname})`);
+          shouldLogout = true;
+        } else if (!user.isAdmin && !user.isTempAdmin && !isPathAllowed(pathname, userBasePaths)) {
+          console.log(`AuthGuard: User unauthorized access (${pathname})`);
+          shouldLogout = true;
         }
       }
     }
 
-    // Perform redirection if needed
-    if (redirectPath) {
-      router.push(redirectPath);
-      // Keep showing loading/checking state until redirect happens
-      setIsChecking(true); 
-    } else {
-      // No redirect needed, checks passed, allow rendering
-      setIsChecking(false); 
+    // Handle unauthorized access with full logout
+    if (shouldLogout) {
+      forceLogout();
+      return;
     }
 
+    // Handle regular redirects
+    if (redirectPath) {
+      // Use replace instead of push to prevent back navigation
+      router.replace(redirectPath);
+    } else {
+      setIsChecking(false);
+    }
   }, [user, authLoading, router, pathname]);
 
-  // Show loading indicator while auth is loading OR if checks are still running/redirecting
   if (authLoading || isChecking) {
-     return (
-       <div className="min-h-screen flex items-center justify-center bg-gray-100">
-         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-       </div>
-     );
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
   }
 
-  // If checks pass and not loading, render the actual page content
   return <>{children}</>;
 }

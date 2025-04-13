@@ -1,10 +1,7 @@
-"use client"
-
 import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Search, Briefcase, Download, Filter } from 'lucide-react';
-import UserManagement from '@/components/UserManagement'; // Updated path
-import { useAuth } from '@/context/AuthContext';
+import UserManagement from './UserManagement'; // Adjust path if file location changes
 
 interface JobListing {
   uid: string;
@@ -29,42 +26,6 @@ const JobList = () => {
   const [error, setError] = useState<string | null>(null);
   const [showCompanyPopup, setShowCompanyPopup] = useState(false);
   const [companyTypeFilter, setCompanyTypeFilter] = useState<string>('All');
-  const [pageLoading, setPageLoading] = useState(true);
-  const { user, loading: authLoading } = useAuth(); // Get user and loading state from context
-
-  useEffect(() => {
-    if (!authLoading) {
-      if (!user || !(user.isAdmin || user.isTempAdmin)) {
-        console.log("Auth check failed: No user or not admin. Redirecting to login.");
-        router.push('/login'); 
-      } else {
-        setPageLoading(false); 
-      }
-    }
-  }, [user, authLoading, router]);
-
-  useEffect(() => {
-    // Only fetch data if the user is authorized (pageLoading is false)
-    if (!pageLoading) {
-      const fetchJobListings = async () => {
-        setLoading(true); // Use the original loading state for data fetching
-        setError(null);
-        try {
-          const response = await fetch('http://localhost:8000/get-data');
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-          const result = await response.json();
-          setJobListings(result.data);
-        } catch (err) {
-          setError(err instanceof Error ? err.message : 'An unknown error occurred');
-        } finally {
-          setLoading(false); // Set original loading state to false after fetch
-        }
-      };
-      fetchJobListings();
-    }
-  }, [pageLoading]);
 
   // Define salary ranges
   const salaryRanges = [
@@ -203,13 +164,11 @@ const JobList = () => {
     document.body.removeChild(link);
   };
 
-  if (pageLoading || loading) return ( 
+  if (loading) return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-50 flex items-center justify-center">
       <div className="text-center">
         <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
-        <p className="mt-4 text-lg font-medium text-gray-700">
-          {pageLoading ? "Authenticating..." : "Loading premium opportunities..."}
-        </p>
+        <p className="mt-4 text-lg font-medium text-gray-700">Loading premium opportunities...</p>
       </div>
     </div>
   );
@@ -310,8 +269,8 @@ const JobList = () => {
   )}
       
 
-      {/* Premium Header */}
-      <header className="bg-white shadow-sm sticky top-0 z-10 border-b border-gray-200">
+     {/* Premium Header */}
+     <header className="bg-white shadow-sm sticky top-0 z-10 border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
           <div className="flex items-center space-x-2">
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
@@ -332,7 +291,7 @@ const JobList = () => {
               <Download className="ml-2 h-4 w-4" />
             </button>
             <button
-              onClick={() => router.push("/Admin")}
+              onClick={() => router.push("/admin")}
               className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-400 text-white rounded-lg hover:from-blue-700 hover:to-blue-500 transition-all shadow-lg hover:shadow-xl font-medium flex items-center"
             >
               Post Opportunity
@@ -340,12 +299,18 @@ const JobList = () => {
                 <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
               </svg>
             </button>
-            
+            <button
+              onClick={() => router.push("/signin")}
+              className="px-5 py-2.5 bg-gradient-to-r from-red-600 to-red-400 text-white rounded-lg hover:from-red-700 hover:to-red-500 transition-all shadow-lg hover:shadow-xl font-medium flex items-center"
+            >
+              Logout
+              <svg className="ml-2 -mr-1 w-4 h-4" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                <path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clipRule="evenodd" />
+              </svg>
+            </button>
           </div>
         </div>
       </header>
-      
-
       {/* Hero Search Section */}
       <section className="bg-gradient-to-r from-blue-700 to-blue-600 text-white py-12">
         <div className="max-w-7xl mx-auto px-6">

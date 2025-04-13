@@ -1,21 +1,8 @@
-"use client"
-
 import React, { useState } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-
-// Helper function to set cookies (consider security implications like HttpOnly if possible via backend)
-function setCookie(name: string, value: string, days: number) {
-  let expires = "";
-  if (days) {
-    const date = new Date();
-    date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
-    expires = "; expires=" + date.toUTCString();
-  }
-  // Ensure Secure flag is used if served over HTTPS; adjust SameSite as needed
-  document.cookie = name + "=" + (value || "") + expires + "; path=/; SameSite=Lax"; 
-}
 
 const Login: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -37,47 +24,50 @@ const Login: React.FC = () => {
     e.preventDefault();
     setLoading(true);
     setError('');
-  
+
     try {
+      const payload = {
+        username: formData.username,
+        password: formData.password
+      };
+
+      console.log('Sending login payload:', payload);
+
       const response = await fetch('http://localhost:8000/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload)
       });
-  
+
+      console.log('Response status:', response.status);
+
       const data = await response.json();
-  
+      console.log('Login response data:', data);
+
       if (!response.ok) {
         throw new Error(data.message || 'Login failed');
       }
-  
-      // 1. Update AuthContext state and localStorage
+
+      // Store user data from response in context
       login({
         username: data.username,
-        isAdmin: data.isAdmin,
-        isTempAdmin: data.isTempAdmin,
+        isAdmin: Boolean(data.isAdmin),
+        isTempAdmin: Boolean(data.isTempAdmin),
         token: data.token,
       });
 
-      // 2. Set cookies for middleware (Set expiry as needed, e.g., 1 day)
-      if (data.token) {
-        setCookie('authToken', data.token, 1); 
-      }
-      setCookie('isAdmin', String(data.isAdmin), 1);
-      setCookie('isTempAdmin', String(data.isTempAdmin), 1);
+      console.log('User authenticated with roles:', {
+        isAdmin: Boolean(data.isAdmin),
+        isTempAdmin: Boolean(data.isTempAdmin)
+      });
 
-      // 3. Redirect based on role
-      if (data.isAdmin && !data.isTempAdmin) {
-        router.push('/adminsearch');
-      } else if (data.isTempAdmin) {
-        router.push('/tempadmin');
-
-      
-      }
-      else{
-        router.push('/user');
-      }
+      // Force a full page navigation to the correct route based on user role
+      window.location.href = Boolean(data.isAdmin) || Boolean(data.isTempAdmin) 
+        ? '/Admin' 
+        : '/user';
+        
     } catch (err) {
+      console.error('Login error:', err);
       setError(err instanceof Error ? err.message : 'Login failed. Please try again.');
     } finally {
       setLoading(false);
@@ -143,12 +133,24 @@ const Login: React.FC = () => {
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
                 >
-                  {showPassword ? "":"" }
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
               </div>
             </div>
 
-            
+            {/* Remember me checkbox */}
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id="remember"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              />
+              <label htmlFor="remember" className="ml-2 block text-sm text-gray-700">
+                Remember me
+              </label>
+            </div>
 
             {/* Login button */}
             <button

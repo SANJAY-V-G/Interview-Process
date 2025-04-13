@@ -1,10 +1,10 @@
-"use client"
+'use client';
 
 import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, Briefcase, Download, Filter } from 'lucide-react';
-import UserManagement from '@/components/UserManagement'; // Updated path
 import { useAuth } from '@/context/AuthContext';
+
+import { Search, Briefcase, Download, Filter } from 'lucide-react';
 
 interface JobListing {
   uid: string;
@@ -15,10 +15,9 @@ interface JobListing {
   salary: number;
 }
 
-// Consider renaming the component, e.g., const JobListPage = () => {
-const JobList = () => {
-  // const navigate = useNavigate(); // Remove this line
-  const router = useRouter(); // Add this line
+const JobListUser = () => {
+  const router = useRouter();
+  const { logout } = useAuth();
   const [selectedRole, setSelectedRole] = useState('All Roles');
   const [selectedCompanyType, setSelectedCompanyType] = useState('All Companies');
   const [selectedSalaryRange, setSelectedSalaryRange] = useState<string>('All Salaries');
@@ -29,42 +28,6 @@ const JobList = () => {
   const [error, setError] = useState<string | null>(null);
   const [showCompanyPopup, setShowCompanyPopup] = useState(false);
   const [companyTypeFilter, setCompanyTypeFilter] = useState<string>('All');
-  const [pageLoading, setPageLoading] = useState(true);
-  const { user, loading: authLoading } = useAuth(); // Get user and loading state from context
-
-  useEffect(() => {
-    if (!authLoading) {
-      if (!user || !(user.isAdmin || user.isTempAdmin)) {
-        console.log("Auth check failed: No user or not admin. Redirecting to login.");
-        router.push('/login'); 
-      } else {
-        setPageLoading(false); 
-      }
-    }
-  }, [user, authLoading, router]);
-
-  useEffect(() => {
-    // Only fetch data if the user is authorized (pageLoading is false)
-    if (!pageLoading) {
-      const fetchJobListings = async () => {
-        setLoading(true); // Use the original loading state for data fetching
-        setError(null);
-        try {
-          const response = await fetch('http://localhost:8000/get-data');
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-          const result = await response.json();
-          setJobListings(result.data);
-        } catch (err) {
-          setError(err instanceof Error ? err.message : 'An unknown error occurred');
-        } finally {
-          setLoading(false); // Set original loading state to false after fetch
-        }
-      };
-      fetchJobListings();
-    }
-  }, [pageLoading]);
 
   // Define salary ranges
   const salaryRanges = [
@@ -174,42 +137,13 @@ const JobList = () => {
     return matchesSearch && matchesRole && matchesCompanyType && matchesSalary && matchesCompany;
   });
 
-  const exportToCSV = () => {
-    // Prepare CSV content
-    const headers = ['Company', 'Role', 'Description', 'Salary (LPA)', 'Type'];
-    const csvRows = filteredJobs.map(job => [
-      `"${(job.companyName || 'Unspecified').replace(/"/g, '""')}"`,
-      `"${(job.roles || 'Unspecified').replace(/"/g, '""')}"`,
-      `"${(job.description || 'No description available').replace(/"/g, '""')}"`,
-      job.salary || 'Not specified',
-      `"${(job.companyType || 'Not specified').replace(/"/g, '""')}"`,
-    ]);
+  
 
-    // Create CSV content
-    const csvContent = [
-      headers.join(','),
-      ...csvRows.map(row => row.join(',')),
-    ].join('\n');
-
-    // Create download link
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', `job_listings_${new Date().toISOString().slice(0,10)}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  if (pageLoading || loading) return ( 
+  if (loading) return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-50 flex items-center justify-center">
       <div className="text-center">
         <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
-        <p className="mt-4 text-lg font-medium text-gray-700">
-          {pageLoading ? "Authenticating..." : "Loading premium opportunities..."}
-        </p>
+        <p className="mt-4 text-lg font-medium text-gray-700">Loading premium opportunities...</p>
       </div>
     </div>
   );
@@ -227,7 +161,7 @@ const JobList = () => {
           <p className="mt-2 text-sm text-gray-500">{error}</p>
           <div className="mt-6">
             <button
-              onClick={() => window.location.reload()}
+              onClick={() => router.refresh()}
               className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-md"
             >
               Try Again
@@ -240,112 +174,51 @@ const JobList = () => {
 
   return (
    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-50">
-  {/* Company Name Popup */}
-  {showCompanyPopup && (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-xl font-semibold">Filter Companies</h3>
-          <button 
-            onClick={() => setShowCompanyPopup(false)}
-            className="text-gray-500 hover:text-gray-700 p-1"
-          >
-            ✕
-          </button>
-        </div>
-        
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Filter by Company Type
-          </label>
-          <select
-            value={companyTypeFilter}
-            onChange={(e) => setCompanyTypeFilter(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option value="All">All Types</option>
-            {allCompanyTypes.map((type) => (
-              <option key={type} value={type}>{type}</option>
-            ))}
-          </select>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-          {filteredCompanies.map((company) => (
-            <button
-              key={company}
-              onClick={() => {
-                setSelectedCompany(company);
-                setShowCompanyPopup(false);
-              }}
-              className={`px-3 py-1 rounded-full text-xs text-white text-center truncate bg-gradient-to-r from-blue-400 to-blue-600 shadow-sm transition-all hover:scale-105 ${
-                selectedCompany === company ? 'ring-1 ring-blue-700' : ''
-              }`}
-              title={company}
-            >
-              {company}
-            </button>
-          ))}
-        </div>
-
-        <div className="mt-4 flex justify-end space-x-3">
-          <button
-            onClick={() => {
-              setSelectedCompany('All Companies');
-              setShowCompanyPopup(false);
-            }}
-            className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900"
-          >
-            Clear Filter
-          </button>
-          <button
-            onClick={() => setShowCompanyPopup(false)}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium"
-          >
-            Done
-          </button>
-        </div>
-      </div>
-    </div>
-  )}
+  
       
-
       {/* Premium Header */}
-      <header className="bg-white shadow-sm sticky top-0 z-10 border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-              <Briefcase className="h-5 w-5 text-white" />
-            </div>
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">
-              Job Portal
-            </h1>
-          </div>
-          <div className="flex space-x-4">
-          <UserManagement />
-            <button
-              onClick={exportToCSV}
-              className="px-5 py-2.5 bg-gradient-to-r from-green-600 to-green-400 text-white rounded-lg hover:from-green-700 hover:to-green-500 transition-all shadow-lg hover:shadow-xl font-medium flex items-center"
-              title="Export current job listings to CSV"
-            >
-              Export CSV
-              <Download className="ml-2 h-4 w-4" />
-            </button>
-            <button
-              onClick={() => router.push("/Admin")}
-              className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-400 text-white rounded-lg hover:from-blue-700 hover:to-blue-500 transition-all shadow-lg hover:shadow-xl font-medium flex items-center"
-            >
-              Post Opportunity
-              <svg className="ml-2 -mr-1 w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
-              </svg>
-            </button>
-            
-          </div>
-        </div>
-      </header>
+<header className="bg-white shadow-sm sticky top-0 z-10 border-b border-gray-200">
+  <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+    <div className="flex items-center space-x-2">
+      <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+        <Briefcase className="h-5 w-5 text-white" />
+      </div>
+      <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">
+        Job Portal
+      </h1>
+    </div>
+    <div className="flex space-x-4">
       
-
+     
+      <button
+        onClick={async () => {
+          try {
+            // Clear client-side storage
+            localStorage.clear();
+            sessionStorage.clear();
+            
+            // Call auth context logout if available
+            if (typeof logout === 'function') {
+              await logout();
+            }
+            
+            // Force full page reload to reset all state
+            window.location.href = '/login';
+          } catch (error) {
+            console.error('Logout failed:', error);
+            window.location.href = '/login';
+          }
+        }}
+        className="px-5 py-2.5 bg-gradient-to-r from-red-600 to-red-400 text-white rounded-lg hover:from-red-700 hover:to-red-500 transition-all shadow-lg hover:shadow-xl font-medium flex items-center"
+      >
+        Logout
+        <svg className="ml-2 -mr-1 w-4 h-4" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+          <path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clipRule="evenodd" />
+        </svg>
+      </button>
+    </div>
+  </div>
+</header>
       {/* Hero Search Section */}
       <section className="bg-gradient-to-r from-blue-700 to-blue-600 text-white py-12">
         <div className="max-w-7xl mx-auto px-6">
@@ -394,13 +267,7 @@ const JobList = () => {
                   <option key={company} value={company}>{company}</option>
                 ))}
               </select>
-              <button
-                onClick={() => setShowCompanyPopup(true)}
-                className="p-2 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors"
-                title="Advanced company filter"
-              >
-                <Filter className="h-5 w-5 text-gray-600" />
-              </button>
+             
             </div>
             
             <div className="flex flex-wrap gap-3">
@@ -457,8 +324,7 @@ const JobList = () => {
                 {filteredJobs.map((job, index) => (
                   <tr 
                     key={index} 
-                    // onClick={() => navigate(`/Terms/${job.uid}`)} // Change this line
-                    onClick={() => router.push(`/Terms/${job.uid}`)} // To this line
+                    onClick={() => router.push(`/UTerms/${job.uid}`)}
                     className="hover:bg-gray-50 cursor-pointer transition-colors"
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -500,8 +366,7 @@ const JobList = () => {
                       <button 
                         onClick={(e) => {
                           e.stopPropagation();
-                          // navigate(`/Terms/${job.uid}`); // Change this line
-                          router.push(`/Terms/${job.uid}`); // To this line
+                          router.push(`/UTerms/${job.uid}`);
                         }}
                         className="text-blue-600 hover:text-blue-800 font-medium flex items-center transition-colors"
                       >
@@ -544,4 +409,4 @@ const JobList = () => {
   );
 };
 
-export default JobList;
+export default JobListUser;
