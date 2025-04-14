@@ -332,7 +332,7 @@ const JobList = () => {
               <Download className="ml-2 h-4 w-4" />
             </button>
             <button
-              onClick={() => router.push("/Admin")}
+              onClick={() => router.push("/admin")}
               className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-400 text-white rounded-lg hover:from-blue-700 hover:to-blue-500 transition-all shadow-lg hover:shadow-xl font-medium flex items-center"
             >
               Post Opportunity

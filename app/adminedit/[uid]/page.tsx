@@ -96,6 +96,10 @@ const getIconForType = (type: string) => {
   return questionType ? questionType.icon : <FileText className="h-5 w-5" />;
 };
 
+interface IncomingData {
+  roles: JobRole[];
+}
+
 export default function Adminedit() {
   // const { uid } = useParams<{ uid: string }>(); // Remove this line
   // const navigate = useNavigate(); // Remove this line
@@ -114,10 +118,11 @@ export default function Adminedit() {
     type: ""
   });
  
-  const [editedCompanyData, setEditedCompanyData] = useState({ ...companyData });
+
  
 
   // Job roles state
+  
   const [jobRoles, setJobRoles] = useState<JobRole[]>([]);
   const [selectedJobId, setSelectedJobId] = useState('');
   const [isEditingJob, setIsEditingJob] = useState(false);
@@ -140,8 +145,6 @@ export default function Adminedit() {
   useEffect(() => {
     activeTabRef.current = activeTab;
   }, [activeTab]);
-
-
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -173,7 +176,7 @@ export default function Adminedit() {
     };
   }, []); 
 
-  // Fetch data from Flask backend
+
   useEffect(() => {
     if (!uid) return; // Don't fetch if uid is not available yet
     const fetchData = async () => {
@@ -186,36 +189,60 @@ export default function Adminedit() {
         }
         
         const data = await response.json();
+        if (data.company) {
+          setCompanyData({
+            name: data.company.name || "",
+            type: data.company.type || "",
+            description: data.company.description || ""
+          });
+        }
+        const transformedJobRoles = (data: IncomingData): JobRole[] => {
+          if (!data || !Array.isArray(data.roles)) {
+            console.warn("Invalid or missing roles data:", data);
+            return [];
+          }
         
-        // Transform the data to match our frontend structure
-        setCompanyData(data.company);
-        setEditedCompanyData(data.company);
+          return data.roles.map((role) => ({
+            ...role,
+            id: uuidv4(),
+            pdfFile: null,
+            pdfFileName: "",
+            interviewRounds: Array.isArray(role.interviewRounds)
+              ? role.interviewRounds.map((round) => ({
+                  ...round,
+                  id: `round-${uuidv4()}`,
+                  questions: Array.isArray(round.questions)
+                    ? round.questions.map((question) => ({
+                        ...question,
+                        count:
+                          typeof question.count !== "undefined" && question.count !== null
+                            ? question.count.toString()
+                            : "0",
+                        icon: getIconForType(question.type),
+                      }))
+                    : [],
+                }))
+              : [],
+            resources: Array.isArray(role.resources)
+              ? role.resources.map((resource) => ({
+                  ...resource,
+                  id: uuidv4(),
+                }))
+              : [],
+          }));
+        };
         
-        const transformedJobRoles = data.roles.map((role: any) => ({
-          ...role,
-          id: uuidv4(),
-          pdfFile: null,
-          pdfFileName: "",
-          interviewRounds: role.interviewRounds.map((round: any) => ({
-            ...round,
-            id: `round-${uuidv4()}`,
-            questions: round.questions.map((question: any) => ({
-              ...question,
-              count: question.count.toString(), // Convert count to string
-              icon: getIconForType(question.type)
-            }))
-          })),
-          resources: role.resources.map((resource: any) => ({
-            ...resource,
-            id: uuidv4()
-          }))
-        }));
-        
-        setJobRoles(transformedJobRoles);
-        setSelectedJobId(transformedJobRoles[0]?.id || '');
+    
+        setJobRoles(transformedJobRoles(data));
+        const transformed = transformedJobRoles(data);
+setJobRoles(transformed); // Assuming this is JobRole[]
+
+if (transformed.length > 0) {
+  setSelectedJobId(transformed[0].id); // ✅ Set the ID of the first job
+}
         setIsLoading(false);
       } catch (error) {
-        console.error()
+        console.error("Fetch error:", error)
         setError("Failed to load data. Please try again later.");
         setIsLoading(false);
       }
@@ -670,7 +697,6 @@ const updateJobField = (field: string, value: string) => {
 
   const handleFinalSubmission = async () => {
     setIsSubmitting(true);
-    
     const submissionData = {
       data: {
         company: {
@@ -690,7 +716,7 @@ const updateJobField = (field: string, value: string) => {
             duration: round.duration,
             questions: round.questions.map(question => ({
               type: question.type,
-              count: parseInt(question.count) // Convert back to number for submission
+              count: parseInt(question.count)
             }))
           })),
           resources: role.resources.map(res => ({
@@ -703,7 +729,7 @@ const updateJobField = (field: string, value: string) => {
         }))
       }
     };
-
+    
   
 
     
@@ -778,6 +804,7 @@ const updateJobField = (field: string, value: string) => {
   
   
   const tabs = [
+      
       {
     id: 'job-roles',
     title: 'Job Roles',

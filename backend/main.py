@@ -256,26 +256,6 @@ async def delete_data(uid: str):
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-@app.get('/image/{companyname}')
-async def send_image(companyname: str):
-    try:
-        # This would need to be implemented based on how you're storing images
-        # Example implementation if using Firebase Storage
-        companies_ref = db.collection("companies")
-        query = companies_ref.where("company.name", "==", companyname).limit(1)
-        docs = query.stream()
-        
-        for doc in docs:
-            data = doc.to_dict()
-            if 'image_url' in data and 'logo_url' in data:
-                return {
-                    "image_url": data["image_url"],
-                    "logo_url": data["logo_url"]
-                }
-        
-        raise HTTPException(status_code=404, detail="Image not found")
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
 @app.get('/')
 async def root():
     return {"message": "Welcome to the Job Portal API!"}
