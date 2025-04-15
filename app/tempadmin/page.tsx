@@ -2,8 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, Briefcase, Download, Filter } from 'lucide-react';
-
+import { Search, Briefcase, Download, Filter, LogOut } from 'lucide-react';
 interface JobListing {
   uid: string;
   companyName: string;
@@ -262,36 +261,56 @@ const SJobList = () => {
       
 
       <header className="bg-white shadow-sm sticky top-0 z-10 border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-              <Briefcase className="h-5 w-5 text-white" />
-            </div>
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">
-              Job Portal
-            </h1>
-          </div>
-          <div className="flex space-x-4">
-            <button
-              onClick={exportToCSV}
-              className="px-5 py-2.5 bg-gradient-to-r from-green-600 to-green-400 text-white rounded-lg hover:from-green-700 hover:to-green-500 transition-all shadow-lg hover:shadow-xl font-medium flex items-center"
-              title="Export current job listings to CSV"
-            >
-              Export CSV
-              <Download className="ml-2 h-4 w-4" />
-            </button>
-            <button
-              onClick={() => router.push("/admin")}
-              className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-400 text-white rounded-lg hover:from-blue-700 hover:to-blue-500 transition-all shadow-lg hover:shadow-xl font-medium flex items-center"
-            >
-              Post Opportunity
-              <svg className="ml-2 -mr-1 w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
-              </svg>
-            </button>
-          </div>
-        </div>
-      </header>
+  <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+    <div className="flex items-center space-x-2">
+      <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+        <Briefcase className="h-5 w-5 text-white" />
+      </div>
+      <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">
+        Job Portal
+      </h1>
+    </div>
+    <div className="flex space-x-4">
+      <button
+        onClick={exportToCSV}
+        className="px-5 py-2.5 bg-gradient-to-r from-green-600 to-green-400 text-white rounded-lg hover:from-green-700 hover:to-green-500 transition-all shadow-lg hover:shadow-xl font-medium flex items-center"
+        title="Export current job listings to CSV"
+      >
+        Export CSV
+        <Download className="ml-2 h-4 w-4" />
+      </button>
+      <button
+        onClick={() => router.push("/admin")}
+        className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-400 text-white rounded-lg hover:from-blue-700 hover:to-blue-500 transition-all shadow-lg hover:shadow-xl font-medium flex items-center"
+      >
+        Post Opportunity
+        <svg className="ml-2 -mr-1 w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+          <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+        </svg>
+      </button>
+      <button
+        onClick={async () => {
+          try {
+            // Clear all storage
+            localStorage.clear();
+            sessionStorage.clear();
+            
+            // Force full page navigation to ensure complete logout
+            window.location.href = '/login';
+          } catch (err) {
+            console.error('Logout failed:', err);
+            // Fallback to router if something fails
+            router.push('/login');
+          }
+        }}
+        className="px-5 py-2.5 bg-gradient-to-r from-red-600 to-red-400 text-white rounded-lg hover:from-red-700 hover:to-red-500 transition-all shadow-lg hover:shadow-xl font-medium flex items-center"
+      >
+        Logout
+        <LogOut className="ml-2 h-4 w-4" />
+      </button>
+    </div>
+  </div>
+</header>
 
       <section className="bg-gradient-to-r from-blue-700 to-blue-600 text-white py-12">
         <div className="max-w-7xl mx-auto px-6">
