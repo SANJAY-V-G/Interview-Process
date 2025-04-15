@@ -332,7 +332,7 @@ async def update_user_tempadmin(request: UpdateTempAdminRequest):
         }
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
-
+# Update your get-users endpoint to include tempadmin status
 @app.get('/api/get-users')
 async def get_users():
     try:
@@ -345,13 +345,13 @@ async def get_users():
             users_data.append({
                 "username": user['username'],
                 "isAdmin": user.get('admin', False),
+                "tempadmin": user.get('tempadmin', False),  # Add this line
                 "id": doc.id
             })
             
         return {"users": users_data}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
-
 @app.post('/api/update-user-admin')
 async def update_user_admin(request: UpdateAdminRequest):
     try:
@@ -421,4 +421,3 @@ async def signup(request: SignupRequest):
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
-

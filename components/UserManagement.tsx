@@ -1,5 +1,3 @@
-"use client"
-
 import { useState, useEffect } from 'react';
 import { X, User, Shield, ShieldOff, Search, Clock } from 'lucide-react';
 
@@ -15,13 +13,23 @@ const UserManagement = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/get-users');
+      setLoading(true);
+      setError(null);
+      const response = await fetch(`http://localhost:8000/api/get-users?refresh=${Date.now()}`, {
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
+      
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
+      
       const data = await response.json();
       setUsers(data.users);
     } catch (err) {
@@ -35,7 +43,10 @@ const UserManagement = () => {
     try {
       const response = await fetch('http://localhost:8000/api/update-user-tempadmin', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache'
+        },
         body: JSON.stringify({ username, isTempAdmin })
       });
 
@@ -43,11 +54,19 @@ const UserManagement = () => {
         throw new Error('Failed to update user');
       }
 
-      setUsers(users.map(user => 
-        user.username === username ? { ...user, tempadmin: isTempAdmin } : user
-      ));
+      // Optimistically update the UI
+      setUsers(prevUsers => 
+        prevUsers.map(user => 
+          user.username === username ? { ...user, tempadmin: isTempAdmin } : user
+        )
+      );
+      
+      // Force a refresh of the data
+      setRefreshTrigger(prev => prev + 1);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update user');
+      // Revert on error
+      fetchUsers();
     }
   };
 
@@ -55,12 +74,17 @@ const UserManagement = () => {
     if (isOpen) {
       fetchUsers();
     }
-  }, [isOpen]);
+  }, [isOpen, refreshTrigger]);
 
-  // Filter to show only non-admin users (admin: false) and apply search filter
   const filteredUsers = users
-    .filter(user => !user.isAdmin) // Only show non-admin users
+    .filter(user => !user.isAdmin)
     .filter(user => user.username.toLowerCase().includes(searchTerm.toLowerCase()));
+
+  const getUserStatus = (user: User) => {
+    if (user.tempadmin) return 'Temp Admin';
+    if (user.isAdmin) return 'Admin';
+    return 'User';
+  };
 
   return (
     <>
@@ -73,7 +97,7 @@ const UserManagement = () => {
       </button>
 
       {isOpen && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50 flex items-center justify-center p-4">
+        <div key={Date.now()} className="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[80vh] overflow-hidden">
             <div className="border-b border-gray-200 p-6 flex justify-between items-center">
               <h3 className="text-xl font-semibold text-gray-900 flex items-center">
@@ -95,7 +119,6 @@ const UserManagement = () => {
             )}
 
             <div className="p-6 overflow-y-auto">
-              {/* Search Bar */}
               <div className="mb-4 flex items-center bg-gray-100 rounded-lg px-3 py-2 w-full max-w-sm">
                 <Search className="text-gray-500 w-4 h-4 mr-2" />
                 <input
@@ -138,34 +161,41 @@ const UserManagement = () => {
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="flex flex-col space-y-1">
-                                <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
-                                  User
+                                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                                  user.tempadmin ? 'bg-yellow-100 text-yellow-800' :
+                                  user.isAdmin ? 'bg-blue-100 text-blue-800' :
+                                  'bg-gray-100 text-gray-800'
+                                }`}>
+                                  {getUserStatus(user)}
                                 </span>
-                                {user.tempadmin && (
-                                  <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                                    Temporary Admin
-                                  </span>
-                                )}
                               </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                              <div className="flex space-x-2">
-                                {!user.tempadmin ? (
-                                  <button
-                                    onClick={() => updateTempAdminStatus(user.username, true)}
-                                    className="text-blue-600 hover:text-blue-800 flex items-center"
-                                  >
-                                    <Clock className="h-4 w-4 mr-1" />
-                                    Make Temp Admin
-                                  </button>
-                                ) : (
-                                  <button
-                                    onClick={() => updateTempAdminStatus(user.username, false)}
-                                    className="text-red-600 hover:text-red-800 flex items-center"
-                                  >
-                                    <ShieldOff className="h-4 w-4 mr-1" />
-                                    Remove Temp Admin
-                                  </button>
+                              <div className="flex flex-col space-y-2">
+                                <div className="flex space-x-2">
+                                  {!user.tempadmin ? (
+                                    <button
+                                      onClick={() => updateTempAdminStatus(user.username, true)}
+                                      className="text-blue-600 hover:text-blue-800 flex items-center"
+                                    >
+                                      <Clock className="h-4 w-4 mr-1" />
+                                      Make Temp Admin
+                                    </button>
+                                  ) : (
+                                    <button
+                                      onClick={() => updateTempAdminStatus(user.username, false)}
+                                      className="text-red-600 hover:text-red-800 flex items-center"
+                                    >
+                                      <ShieldOff className="h-4 w-4 mr-1" />
+                                      Remove Temp Admin
+                                    </button>
+                                  )}
+                                </div>
+                                {user.tempadmin && (
+                                  <span className="text-xs text-gray-500 flex items-center">
+                                    <Shield className="h-3 w-3 mr-1" />
+                                    Currently a temporary admin
+                                  </span>
                                 )}
                               </div>
                             </td>
