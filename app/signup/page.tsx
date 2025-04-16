@@ -42,7 +42,7 @@ const handleSubmit = async (e: React.FormEvent) => {
       password: formData.password
     };
 
-    console.log('Sending payload:', payload); // For debugging
+    console.log('Sending payload:', payload); 
 
     const response = await fetch('http://localhost:8000/api/signup', {
       method: 'POST',

@@ -855,6 +855,7 @@ const handleFinalSubmission = async () => {
 
     const result = await response.json();
   
+    
     alert("Data submitted successfully!");
     // navigate(-1); // Change this line
     router.back(); // To this line

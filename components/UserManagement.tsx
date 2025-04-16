@@ -14,6 +14,18 @@ const UserManagement = () => {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(searchTerm);
+
+  // Debounce the search input
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300); // Debounce time (in ms)
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [searchTerm]);
 
   const fetchUsers = async () => {
     try {
@@ -78,7 +90,7 @@ const UserManagement = () => {
 
   const filteredUsers = users
     .filter(user => !user.isAdmin)
-    .filter(user => user.username.toLowerCase().includes(searchTerm.toLowerCase()));
+    .filter(user => user.username.toLowerCase().includes(debouncedSearchTerm.toLowerCase()));
 
   const getUserStatus = (user: User) => {
     if (user.tempadmin) return 'Temp Admin';

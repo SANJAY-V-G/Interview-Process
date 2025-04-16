@@ -340,7 +340,7 @@ const JobPortal = () => {
                       <div>
                         <p className="text-sm font-medium text-gray-500">10th Grade Marks</p>
                         <p className="text-xl font-medium text-gray-800 mt-1">
-                          {selectedRole.educationRequirements.tenthMark}%
+                          {selectedRole.educationRequirements.tenthMark}
                         </p>
                       </div>
                     )}
