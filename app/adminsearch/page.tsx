@@ -36,7 +36,6 @@ const JobList = () => {
   useEffect(() => {
     if (!authLoading) {
       if (!user || !(user.isAdmin || user.isTempAdmin)) {
-        console.log("Auth check failed: No user or not admin. Redirecting to login.");
         router.push('/login'); 
       } else {
         setPageLoading(false); 
