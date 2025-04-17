@@ -43,7 +43,7 @@ const JobListUser = () => {
   useEffect(() => {
     const fetchJobListings = async () => {
       try {
-        const response = await fetch('http://localhost:8000/get-data');
+        const response = await fetch('https://backend-0728.onrender.com/get-data');
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }

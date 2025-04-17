@@ -109,29 +109,6 @@ const CompanyLogo = ({ logoUrl, companyName }: { logoUrl: string | null, company
   );
 };
 
-const fetchCompanyAssets = async (companyName: string) => {
-  try {
-    const response = await fetch(`http://localhost:8000/image/${encodeURIComponent(companyName)}`);
-    
-    if (!response.ok) {
-      throw new Error('Failed to fetch company assets');
-    }
-    
-    const data = await response.json();
-    
-    return {
-      banner: data.image_url || null,
-      logo: data.logo_url || null
-    };
-  } catch (error) {
-    console.error();
-    return {
-      banner: null,
-      logo: null
-    };
-  }
-};
-
 const UJobPortal = () => {
   const router = useRouter(); // Use Next.js router
   const params = useParams(); // Use Next.js useParams
@@ -150,7 +127,7 @@ const UJobPortal = () => {
   useEffect(() => {
     const fetchJobData = async () => {
       try {
-        const response = await fetch(`http://localhost:8000/get-job/${uid}`);
+        const response = await fetch(`https://backend-0728.onrender.com/get-job/${uid}`);
 
         if (!response.ok) {
           throw new Error('Job not found');
@@ -167,25 +144,6 @@ const UJobPortal = () => {
     fetchJobData();
   }, [uid]);
 
-  useEffect(() => {
-    if (jobData?.company?.name) {
-      const fetchAssets = async () => {
-        try {
-          const { banner, logo } = await fetchCompanyAssets(jobData.company.name);
-          setBannerImage(banner || "/placeholder-banner.svg");
-          setCompanyLogo(logo);
-        } catch (error) {
-          console.error("Failed to fetch assets:", error); // Keep console.error for debugging
-          setBannerImage("/placeholder-banner.svg");
-          setCompanyLogo(null);
-        } finally {
-          setAssetsLoading(false);
-        }
-      };
-
-      fetchAssets();
-    }
-  }, [jobData?.company?.name]);
 
   const handleRoundSelect = (index: number) => {
     if (activeRound === `round${index}`) {

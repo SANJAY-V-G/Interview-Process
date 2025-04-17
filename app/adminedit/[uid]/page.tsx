@@ -182,7 +182,7 @@ export default function Adminedit() {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch(`http://127.0.0.1:8000/get-job-data/${uid}`);
+        const response = await fetch(`https://backend-0728.onrender.com/get-job-data/${uid}`);
         
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -734,7 +734,7 @@ const updateJobField = (field: string, value: string) => {
 
     
     try {
-      const response = await fetch(`http://127.0.0.1:8000/update-job/${uid}`, {
+      const response = await fetch(`https://backend-0728.onrender.com/update-job/${uid}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json"

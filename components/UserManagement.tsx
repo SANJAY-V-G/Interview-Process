@@ -31,7 +31,7 @@ const UserManagement = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch(`http://localhost:8000/api/get-users?refresh=${Date.now()}`, {
+      const response = await fetch(`https://backend-0728.onrender.com/api/get-users?refresh=${Date.now()}`, {
         headers: {
           'Cache-Control': 'no-cache',
           'Pragma': 'no-cache'
@@ -53,7 +53,7 @@ const UserManagement = () => {
 
   const updateTempAdminStatus = async (username: string, isTempAdmin: boolean) => {
     try {
-      const response = await fetch('http://localhost:8000/api/update-user-tempadmin', {
+      const response = await fetch('https://backend-0728.onrender.com/api/update-user-tempadmin', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',

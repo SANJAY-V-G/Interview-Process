@@ -194,7 +194,7 @@ const checkCompanyExists = async (companyName: string) => {
     // For example, if user enters "TCS" and we have "ABC (TCS)" in database
     namesToCheck.push(companyName.toLowerCase().trim()); // The input itself
 
-    const response = await fetch("http://127.0.0.1:8000/check-company", {
+    const response = await fetch("https://backend-0728.onrender.com/check-company", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -773,7 +773,7 @@ const handleSave = async () => {
     
     // Optional: Send to backend
     try {
-      const response = await fetch("http://127.0.0.1:8000/update-company", {
+      const response = await fetch("https://backend-0728.onrender.com/update-company", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ company: editedCompanyData })
@@ -841,7 +841,7 @@ const handleFinalSubmission = async () => {
 
   try {
     
-    const response = await fetch("http://127.0.0.1:8000/submit-data", {
+    const response = await fetch("https://backend-0728.onrender.com/submit-data", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
