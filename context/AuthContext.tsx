@@ -37,7 +37,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Make sure the login function properly sets user data and updates localStorage
   const login = (userData: User) => {
-    console.log('Setting user data in context:', userData); // Enhanced debug
     
     // Ensure boolean values for roles and create a clean object
     const normalizedUserData = {
@@ -47,13 +46,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       token: userData.token
     };
     
-    console.log('Normalized user data:', normalizedUserData); // Log normalized data
+    
     
     // Update state and localStorage
     setUser(normalizedUserData);
     localStorage.setItem('user', JSON.stringify(normalizedUserData));
     
-    console.log('User stored in localStorage:', JSON.parse(localStorage.getItem('user') || '{}')); 
+    
   };
 
   const signup = async (email: string, password: string) => {

@@ -273,6 +273,8 @@ class UpdateAdminRequest(BaseModel):
     isAdmin: bool
 @app.post('/api/login')
 async def login(request: LoginRequest):
+    
+
     try:
         users_ref = db.collection("users")
         query = users_ref.where("username", "==", request.username).limit(1)
@@ -386,19 +388,23 @@ async def update_user_admin(request: UpdateAdminRequest):
     
 @app.post('/api/signup')
 async def signup(request: SignupRequest):
+    
     try:
         # Check if user exists
+        
         users_ref = db.collection("users")
         query = users_ref.where("username", "==", request.username).limit(1)
-        docs = query.stream()
         
+
+        docs = query.stream()
+       
         if any(docs):
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail="Username already exists"
             )
             
-        # Create new user
+
         user_data = {
             "username": request.username,
             "password": request.password,
@@ -408,7 +414,7 @@ async def signup(request: SignupRequest):
         }
         
         _, doc_ref = users_ref.add(user_data)
-        
+        print(request)
         return {
             "message": "Signup successful",
             "username": request.username,
@@ -416,6 +422,7 @@ async def signup(request: SignupRequest):
             "isTempAdmin": False
         }
     except Exception as e:
+        print(e)
         raise HTTPException(status_code=400, detail=str(e))
 
 if __name__ == "__main__":
