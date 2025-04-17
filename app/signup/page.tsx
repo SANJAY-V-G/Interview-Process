@@ -45,7 +45,7 @@ const handleSubmit = async (e: React.FormEvent) => {
     };
 
 
-    const response = await fetch('https://backend-0728.onrender.com/api/signup', {
+    const response = await fetch('https://backend-nox2.onrender.com/api/signup', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
