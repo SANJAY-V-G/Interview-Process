@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from "react";
-import { useRouter, useParams } from "next/navigation"; // Import useRouter and useParams from next/navigation
-import { ChevronDown, ChevronRight, ExternalLink, Info, Lightbulb, Clock, BookOpen, CheckCircle, Pencil ,Eye,X} from "lucide-react";
+import { useRouter, useParams } from "next/navigation";
+import { ChevronDown, ChevronRight, ExternalLink, Info, Lightbulb, Clock, BookOpen, CheckCircle, Pencil, Eye, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface EducationRequirements {
@@ -109,8 +109,6 @@ const CompanyLogo = ({ logoUrl, companyName }: { logoUrl: string | null, company
   );
 };
 
-
-
 const UJobPortal = () => {
   const router = useRouter(); // Use Next.js router
   const params = useParams(); // Use Next.js useParams
@@ -121,10 +119,7 @@ const UJobPortal = () => {
   const [selectedRoleIndex, setSelectedRoleIndex] = useState(0);
   const [activeRound, setActiveRound] = useState<string | null>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [bannerImage, setBannerImage] = useState<string | null>(null);
-  const [companyLogo, setCompanyLogo] = useState<string | null>(null);
-  const [assetsLoading, setAssetsLoading] = useState(true);
-  const [isOverallViewOpen, setIsOverallViewOpen] = useState(false);
+  
 
   useEffect(() => {
     const fetchJobData = async () => {
@@ -208,6 +203,51 @@ const UJobPortal = () => {
               )}
             </div>
           </section>
+
+          {/* Interview Process Overview - Moved this section up */}
+          {selectedRole.interviewRounds && selectedRole.interviewRounds.length > 0 && (
+            <section className="bg-white rounded-xl shadow-lg p-8 border border-gray-100 hover:shadow-xl transition-shadow duration-300">
+              <h2 className="text-xl font-bold mb-6 text-sky-600 flex items-center">
+                <div className="bg-sky-100 p-2 rounded-full mr-3">
+                  <Clock className="w-5 h-5 text-sky-500" />
+                </div>
+                Interview Process Overview
+              </h2>
+              
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Round</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duration</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Question Types</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {selectedRole.interviewRounds.map((round, index) => (
+                      <tr key={index}>
+                        <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{index + 1}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-gray-700">{round.title || `Round ${index + 1}`}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-gray-700">{round.duration || "Not specified"}</td>
+                        <td className="px-6 py-4 text-gray-700">
+                          {round.questions && round.questions.length > 0 ? (
+                            <ul className="list-disc pl-5">
+                              {round.questions.map((q, qIndex) => (
+                                <li key={qIndex}>{q.count} {q.type} questions</li>
+                              ))}
+                            </ul>
+                          ) : (
+                            "No questions specified"
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          )}
 
           {/* Job Roles Selection */}
           {jobData.roles.length > 0 && (
@@ -355,181 +395,114 @@ const UJobPortal = () => {
             </section>
           )}
 
-          {/* Interview Process */}
+          {/* Detailed Interview Process */}
           {selectedRole.interviewRounds && selectedRole.interviewRounds.length > 0 && (
-  <section className="bg-white rounded-xl shadow-lg p-8 border border-gray-100 hover:shadow-xl transition-shadow duration-300">
-    <div className="flex justify-between items-center mb-8">
-      <h2 className="text-xl font-bold text-sky-600 flex items-center">
-        <div className="bg-sky-100 p-2 rounded-full mr-3">
-          <Clock className="w-5 h-5 text-sky-500" />
-        </div>
-        Interview Process
-      </h2>
-      <button
-        onClick={() => setIsOverallViewOpen(true)}
-        className="px-4 py-2 bg-sky-500 text-white rounded-lg hover:bg-sky-600 transition-colors duration-200 flex items-center"
-      >
-        <Eye className="w-4 h-4 mr-2" />
-        Overall View
-      </button>
-    </div>
-
-    {/* Popup for Overall View */}
-    {isOverallViewOpen && (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-auto">
-          <div className="sticky top-0 bg-white p-6 border-b border-gray-200 flex justify-between items-center">
-            <h3 className="text-xl font-bold text-gray-800">Interview Process Overview</h3>
-            <button
-              onClick={() => setIsOverallViewOpen(false)}
-              className="text-gray-500 hover:text-gray-700"
-            >
-              <X className="w-6 h-6" />
-            </button>
-          </div>
-          <div className="p-6">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Round</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duration</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Question Types</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {selectedRole.interviewRounds.map((round, index) => (
-                  <tr key={index}>
-                    <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{index + 1}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-gray-700">{round.title || `Round ${index + 1}`}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-gray-700">{round.duration || "Not specified"}</td>
-                    <td className="px-6 py-4 text-gray-700">
-                      {round.questions && round.questions.length > 0 ? (
-                        <ul className="list-disc pl-5">
-                          {round.questions.map((q, qIndex) => (
-                            <li key={qIndex}>{q.count} {q.type} questions</li>
-                          ))}
-                        </ul>
-                      ) : (
-                        "No questions specified"
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <div className="sticky bottom-0 bg-white p-4 border-t border-gray-200 flex justify-end">
-            <button
-              onClick={() => setIsOverallViewOpen(false)}
-              className="px-4 py-2 bg-sky-500 text-white rounded-lg hover:bg-sky-600 transition-colors duration-200"
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      </div>
-    )}
-
-    <div className="relative pl-8 border-l-2 border-sky-200 space-y-10">
-      {selectedRole.interviewRounds.map((round, index) => (
-        <div key={index} className="relative">
-          <button
-            onClick={() => handleRoundSelect(index)}
-            className={`flex items-start md:items-center mb-3 -ml-[25px] transition-all duration-200 ${
-              activeRound === `round${index}`
-                ? "text-sky-600 font-semibold"
-                : "text-gray-700 hover:text-sky-500"
-            }`}
-          >
-            <div
-              className={`w-12 h-12 rounded-full flex items-center justify-center mr-4 transition-all duration-200 ${
-                activeRound === `round${index}`
-                  ? "bg-gradient-to-r from-sky-400 to-sky-500 text-white shadow-lg"
-                  : "bg-gradient-to-r from-gray-100 to-gray-200 border border-gray-300 hover:border-sky-300 text-gray-700"
-              }`}
-            >
-              <span className="font-medium">{index + 1}</span>
-            </div>
-            <div className="text-left">
-              <h3 className="text-lg font-medium">{round.title || `Round ${index + 1}`}</h3>
-              <div className="flex items-center text-sm text-gray-500 mt-1">
-                Duration:&nbsp;
-                {round.duration || "Duration not specified"}
-              </div>
-            </div>
-            <ChevronRight
-              className={`ml-4 h-5 w-5 transition-transform ${
-                activeRound === `round${index}` ? "transform rotate-90 text-sky-500" : "text-gray-400"
-              }`}
-            />
-          </button>
-
-          <AnimatePresence>
-            {activeRound === `round${index}` && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.3 }}
-                className="overflow-hidden"
-              >
-                <div className="pl-12 border-l border-dashed border-gray-300 ml-4 space-y-6">
-                  {round.questions && round.questions.length > 0 && (
-                    <div className="bg-gradient-to-r from-gray-50 to-white p-5 rounded-lg border border-gray-200 shadow-sm">
-                      <h4 className="font-medium text-gray-800 mb-3">Question Types:</h4>
-                      <ul className="list-disc pl-5 text-sm text-gray-700 space-y-2">
-                        {round.questions.map((q, qIndex) => (
-                          <li key={qIndex} className="font-medium">
-                            {q.count} {q.type} questions
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-
-                  {round.questions && round.questions.length > 0 && (
-                    <div className="bg-gradient-to-r from-sky-50 to-sky-100 rounded-xl p-6 border border-sky-200 shadow-sm">
-                      <h4 className="font-semibold text-sky-600 mb-5 flex items-center">
-                        <Info className="w-5 h-5 mr-2" />
-                        Preparation Tips
-                      </h4>
-                      <div className="space-y-4">
-                        {round.questions.map((q, qIndex) => (
-                          <div
-                            key={qIndex}
-                            className="bg-white p-5 rounded-lg shadow-sm border border-gray-100 hover:border-sky-200 transition-colors"
-                          >
-                            <div className="flex items-start">
-                              <div className="bg-sky-100 p-1.5 rounded-full mr-3 mt-1">
-                                <CheckCircle className="w-4 h-4 text-sky-500" />
-                              </div>
-                              <div>
-                                <p className="text-gray-800 font-medium">{q.type} Preparation</p>
-                                <p className="text-sm text-gray-600 mt-2 leading-relaxed">
-                                  For {q.count} {q.type.toLowerCase()} questions, focus on{" "}
-                                  {q.type === "Coding"
-                                    ? "practicing algorithms on platforms like LeetCode"
-                                    : "solving aptitude problems from standard resources"}
-                                  .
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+            <section className="bg-white rounded-xl shadow-lg p-8 border border-gray-100 hover:shadow-xl transition-shadow duration-300">
+              <h2 className="text-xl font-bold mb-6 text-sky-600 flex items-center">
+                <div className="bg-sky-100 p-2 rounded-full mr-3">
+                  <Clock className="w-5 h-5 text-sky-500" />
                 </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-      ))}
-    </div>
-  </section>
-)}
+                Detailed Interview Process
+              </h2>
 
+              <div className="relative pl-8 border-l-2 border-sky-200 space-y-10">
+                {selectedRole.interviewRounds.map((round, index) => (
+                  <div key={index} className="relative">
+                    <button
+                      onClick={() => handleRoundSelect(index)}
+                      className={`flex items-start md:items-center mb-3 -ml-[25px] transition-all duration-200 ${
+                        activeRound === `round${index}`
+                          ? "text-sky-600 font-semibold"
+                          : "text-gray-700 hover:text-sky-500"
+                      }`}
+                    >
+                      <div
+                        className={`w-12 h-12 rounded-full flex items-center justify-center mr-4 transition-all duration-200 ${
+                          activeRound === `round${index}`
+                            ? "bg-gradient-to-r from-sky-400 to-sky-500 text-white shadow-lg"
+                            : "bg-gradient-to-r from-gray-100 to-gray-200 border border-gray-300 hover:border-sky-300 text-gray-700"
+                        }`}
+                      >
+                        <span className="font-medium">{index + 1}</span>
+                      </div>
+                      <div className="text-left">
+                        <h3 className="text-lg font-medium">{round.title || `Round ${index + 1}`}</h3>
+                        <div className="flex items-center text-sm text-gray-500 mt-1">
+                          Duration:&nbsp;
+                          {round.duration || "Duration not specified"}
+                        </div>
+                      </div>
+                      <ChevronRight
+                        className={`ml-4 h-5 w-5 transition-transform ${
+                          activeRound === `round${index}` ? "transform rotate-90 text-sky-500" : "text-gray-400"
+                        }`}
+                      />
+                    </button>
+
+                    <AnimatePresence>
+                      {activeRound === `round${index}` && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          exit={{ opacity: 0, height: 0 }}
+                          transition={{ duration: 0.3 }}
+                          className="overflow-hidden"
+                        >
+                          <div className="pl-12 border-l border-dashed border-gray-300 ml-4 space-y-6">
+                            {round.questions && round.questions.length > 0 && (
+                              <div className="bg-gradient-to-r from-gray-50 to-white p-5 rounded-lg border border-gray-200 shadow-sm">
+                                <h4 className="font-medium text-gray-800 mb-3">Question Types:</h4>
+                                <ul className="list-disc pl-5 text-sm text-gray-700 space-y-2">
+                                  {round.questions.map((q, qIndex) => (
+                                    <li key={qIndex} className="font-medium">
+                                      {q.count} {q.type} questions
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+
+                            {round.questions && round.questions.length > 0 && (
+                              <div className="bg-gradient-to-r from-sky-50 to-sky-100 rounded-xl p-6 border border-sky-200 shadow-sm">
+                                <h4 className="font-semibold text-sky-600 mb-5 flex items-center">
+                                  <Info className="w-5 h-5 mr-2" />
+                                  Preparation Tips
+                                </h4>
+                                <div className="space-y-4">
+                                  {round.questions.map((q, qIndex) => (
+                                    <div
+                                      key={qIndex}
+                                      className="bg-white p-5 rounded-lg shadow-sm border border-gray-100 hover:border-sky-200 transition-colors"
+                                    >
+                                      <div className="flex items-start">
+                                        <div className="bg-sky-100 p-1.5 rounded-full mr-3 mt-1">
+                                          <CheckCircle className="w-4 h-4 text-sky-500" />
+                                        </div>
+                                        <div>
+                                          <p className="text-gray-800 font-medium">{q.type} Preparation</p>
+                                          <p className="text-sm text-gray-600 mt-2 leading-relaxed">
+                                            For {q.count} {q.type.toLowerCase()} questions, focus on{" "}
+                                            {q.type === "Coding"
+                                              ? "practicing algorithms on platforms like LeetCode"
+                                              : "solving aptitude problems from standard resources"}
+                                            .
+                                          </p>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
 
           {/* Resources Section */}
           {selectedRole.resources && selectedRole.resources.length > 0 && (
@@ -582,7 +555,6 @@ const UJobPortal = () => {
           )}
         </div>
       </main>
-      
     </div>
   );
 };
