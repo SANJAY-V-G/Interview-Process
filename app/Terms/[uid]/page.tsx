@@ -118,9 +118,7 @@ const JobPortal = () => {
   const [selectedRoleIndex, setSelectedRoleIndex] = useState(0);
   const [activeRound, setActiveRound] = useState<string | null>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [bannerImage, setBannerImage] = useState<string | null>(null);
-  const [companyLogo, setCompanyLogo] = useState<string | null>(null);
-  const [assetsLoading, setAssetsLoading] = useState(true);
+  
   useEffect(() => {
     const fetchJobData = async () => {
       try {
@@ -482,45 +480,14 @@ const JobPortal = () => {
                                 <ul className="list-disc pl-5 text-sm text-gray-700 space-y-2">
                                   {round.questions.map((q, qIndex) => (
                                     <li key={qIndex} className="font-medium">
-                                      {q.count} {q.type} questions
+                                      {q.count} {q.type} 
                                     </li>
                                   ))}
                                 </ul>
                               </div>
                             )}
 
-                            {round.questions && round.questions.length > 0 && (
-                              <div className="bg-gradient-to-r from-sky-50 to-sky-100 rounded-xl p-6 border border-sky-200 shadow-sm">
-                                <h4 className="font-semibold text-sky-600 mb-5 flex items-center">
-                                  <Info className="w-5 h-5 mr-2" />
-                                  Preparation Tips
-                                </h4>
-                                <div className="space-y-4">
-                                  {round.questions.map((q, qIndex) => (
-                                    <div
-                                      key={qIndex}
-                                      className="bg-white p-5 rounded-lg shadow-sm border border-gray-100 hover:border-sky-200 transition-colors"
-                                    >
-                                      <div className="flex items-start">
-                                        <div className="bg-sky-100 p-1.5 rounded-full mr-3 mt-1">
-                                          <CheckCircle className="w-4 h-4 text-sky-500" />
-                                        </div>
-                                        <div>
-                                          <p className="text-gray-800 font-medium">{q.type} Preparation</p>
-                                          <p className="text-sm text-gray-600 mt-2 leading-relaxed">
-                                            For {q.count} {q.type.toLowerCase()} questions, focus on{" "}
-                                            {q.type === "Coding"
-                                              ? "practicing algorithms on platforms like LeetCode"
-                                              : "solving aptitude problems from standard resources"}
-                                            .
-                                          </p>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
+                          
                           </div>
                         </motion.div>
                       )}

@@ -116,8 +116,7 @@ const JobListUser = () => {
   }, [companyTypeFilter, companiesByType, allCompanies]);
 
   const filteredJobs = jobListings.filter(job => {
-    const matchesSearch = job.companyName.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                         job.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = job.companyName.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesRole = selectedRole === 'All Roles' || 
                        (job.roles && job.roles === selectedRole);
     const matchesCompanyType = selectedCompanyType === 'All Companies' || 
