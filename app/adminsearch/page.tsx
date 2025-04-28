@@ -396,64 +396,63 @@ const JobList = () => {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-6 py-8">
         {/* Filters */}
-        <div className="bg-white/90 backdrop-blur-sm rounded-xl p-6 mb-8 shadow-sm border border-gray-200">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <div className="flex items-center gap-2">
-              <select
-                value={selectedCompany}
-                onChange={(e) => setSelectedCompany(e.target.value)}
-                className="px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-400 bg-white shadow-sm"
-              >
-                <option>All Companies</option>
-                {allCompanies.map((company) => (
-                  <option key={company} value={company}>{company}</option>
-                ))}
-              </select>
-              <button
-                onClick={() => setShowCompanyPopup(true)}
-                className="p-2 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors"
-                title="Advanced company filter"
-              >
-                <Filter className="h-5 w-5 text-gray-600" />
-              </button>
-            </div>
-            
-            <div className="flex flex-wrap gap-3">
-              <select
-                value={selectedRole}
-                onChange={(e) => setSelectedRole(e.target.value)}
-                className="px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-400 bg-white shadow-sm"
-              >
-                <option>All Roles</option>
-                {allRoles.map((role) => (
-                  <option key={role} value={role}>{role}</option>
-                ))}
-              </select>
-              
-              <select
-                value={selectedCompanyType}
-                onChange={(e) => setSelectedCompanyType(e.target.value)}
-                className="px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-400 bg-white shadow-sm"
-              >
-                <option>All Companies</option>
-                {allCompanyTypes.map((type) => (
-                  <option key={type} value={type}>{type}</option>
-                ))}
-              </select>
+          <div className="bg-white/90 backdrop-blur-sm rounded-xl p-6 mb-8 shadow-sm border border-gray-200">
+  <div className="flex flex-col md:flex-row md:items-center gap-4">
+    <div className="flex items-center gap-2">
+      <select
+        value={selectedCompany}
+        onChange={(e) => setSelectedCompany(e.target.value)}
+        className="px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-400 bg-white shadow-sm min-w-[160px]"
+      >
+        <option>All Companies</option>
+        {allCompanies.map((company) => (
+          <option key={company} value={company}>{company}</option>
+        ))}
+      </select>
+      <button
+        onClick={() => setShowCompanyPopup(true)}
+        className="p-2 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors"
+        title="Advanced company filter"
+      >
+        <Filter className="h-4 w-4 text-gray-600" />
+      </button>
+    </div>
 
-              <select
-                value={selectedSalaryRange}
-                onChange={(e) => setSelectedSalaryRange(e.target.value)}
-                className="px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-400 bg-white shadow-sm"
-              >
-                {salaryRanges.map((range) => (
-                  <option key={range.value} value={range.value}>{range.label}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-        </div>
+    <div className="flex items-center gap-2 flex-wrap md:flex-nowrap">
+      <select
+        value={selectedRole}
+        onChange={(e) => setSelectedRole(e.target.value)}
+        className="px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-400 bg-white shadow-sm min-w-[160px]"
+      >
+        <option>All Roles</option>
+        {allRoles.map((role) => (
+          <option key={role} value={role}>{role}</option>
+        ))}
+      </select>
 
+      <select
+        value={selectedCompanyType}
+        onChange={(e) => setSelectedCompanyType(e.target.value)}
+        className="px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-400 bg-white shadow-sm min-w-[160px]"
+      >
+        <option>All Companies</option>
+        {allCompanyTypes.map((type) => (
+          <option key={type} value={type}>{type}</option>
+        ))}
+      </select>
+
+      <select
+        value={selectedSalaryRange}
+        onChange={(e) => setSelectedSalaryRange(e.target.value)}
+        className="px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-400 bg-white shadow-sm min-w-[160px]"
+      >
+        {salaryRanges.map((range) => (
+          <option key={range.value} value={range.value}>{range.label}</option>
+        ))}
+      </select>
+    </div>
+  </div>
+  </div>
         {/* Job Listings Table */}
         <div className="bg-white/90 backdrop-blur-sm rounded-xl border border-gray-200 shadow-md overflow-hidden">
           {filteredJobs.length > 0 ? (

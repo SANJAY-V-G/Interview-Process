@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect } from "react"
 import { useRouter } from 'next/navigation';
+import { fetchQuestionTypes, addQuestionType } from "../services/questionTypes";
 import { Edit2, Save, X, Plus, Trash2, Upload, FileText, CheckCircle, ChevronDown, Code, Users, ExternalLink, BookOpen, Video, AlertCircle } from "lucide-react"
 
 declare namespace JSX {
@@ -35,15 +36,7 @@ const DEPARTMENT_OPTIONS = [
   "Cyber Security"
 ]
 
-const QUESTION_TYPES = [
-  { value: "Aptitude", icon: <FileText className="h-5 w-5" /> },
-  { value: "Coding", icon: <Code className="h-5 w-5" /> },
-  { value: "System Design", icon: <FileText className="h-5 w-5" /> },
-  { value: "Behavioral", icon: <Users className="h-5 w-5" /> },
-  { value: "Code Review", icon: <Code className="h-5 w-5" /> },
-  { value: "Technical", icon: <FileText className="h-5 w-5" /> },
-  { value: "DSA questions", icon: <FileText className="h-5 w-5" /> },
-]
+
 
 const RESOURCE_ICONS = [
   { value: "book", label: "Book", icon: <BookOpen className="h-5 w-5" /> },
@@ -139,58 +132,29 @@ const [isSubmitting, setIsSubmitting] = useState(false);
 const [showSubmitButton, setShowSubmitButton] = useState(false);
 const [showSuccessMessage, setShowSuccessMessage] = useState(false);
 const [companyNameInput, setCompanyNameInput] = useState("");
+const [questionTypes, setQuestionTypes] = useState<{value: string, icon: JSX.Element}[]>([]);
+
 const debouncedCompanyName = useDebounce(companyNameInput, 500);
 
-const [questionTypes, setQuestionTypes] = useState<{ value: string; icon: JSX.Element }[]>([]);
-const [isLoadingQuestionTypes, setIsLoadingQuestionTypes] = useState(true);
 
 // Derived state
 const selectedJob = jobRoles.find(job => job.id === selectedJobId) || jobRoles[0] || null;
 const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
-
-const fetchQuestionTypes = async () => {
-  try {
-    setIsLoadingQuestionTypes(true);
-    const response = await fetch("https://backend-nox2.onrender.com/get-question-types");
-    if (!response.ok) throw new Error("Failed to fetch question types");
-    
-    const data = await response.json();
-    const iconMap: Record<string, JSX.Element> = {
-      "FileText": <FileText className="h-5 w-5" />,
-      "Code": <Code className="h-5 w-5" />,
-      "Users": <Users className="h-5 w-5" />,
-      "BookOpen": <BookOpen className="h-5 w-5" />,
-      "Video": <Video className="h-5 w-5" />,
-      "ExternalLink": <ExternalLink className="h-5 w-5" />,
-      "AlertCircle": <AlertCircle className="h-5 w-5" />
-    };
-    
-    const mappedTypes = data.question_types.map((type: any) => ({
-      value: type.value,
-      icon: iconMap[type.icon] || <FileText className="h-5 w-5" />
-    }));
-    
-    setQuestionTypes(mappedTypes);
-  } catch (error) {
-    console.error("Error fetching question types:", error);
-    // Fallback to default types if fetch fails
-    setQuestionTypes([
-      { value: "Aptitude", icon: <FileText className="h-5 w-5" /> },
-      { value: "Coding", icon: <Code className="h-5 w-5" /> },
-      { value: "System Design", icon: <FileText className="h-5 w-5" /> },
-      { value: "Behavioral", icon: <Users className="h-5 w-5" /> },
-      { value: "Code Review", icon: <Code className="h-5 w-5" /> },
-      { value: "Technical", icon: <FileText className="h-5 w-5" /> },
-      { value: "DSA questions", icon: <FileText className="h-5 w-5" /> }
-    ]);
-  } finally {
-    setIsLoadingQuestionTypes(false);
-  }
-};
-
 useEffect(() => {
-  fetchQuestionTypes();
+  const loadQuestionTypes = async () => {
+    try {
+      const types = await fetchQuestionTypes();
+      setQuestionTypes(types.map((type: { value: any; }) => ({
+        value: type.value,
+        icon: <FileText className="h-5 w-5" /> // Or use icon from response
+      })));
+    } catch (error) {
+      console.error("Failed to load question types:", error);
+    }
+  };
+  
+  loadQuestionTypes();
 }, []);
 
 useEffect(() => {
@@ -360,48 +324,32 @@ const updateEducationField = (field: keyof JobRole['educationRequirements'], val
     }
   }
 };
+
+// Modify addNewQuestionType to call backend
 const addNewQuestionType = async () => {
   const trimmedType = newQuestionType.trim();
   
   if (!trimmedType) return;
 
   try {
-    // Check if type already exists locally (case insensitive)
-    const typeExists = questionTypes.some(q => 
-      q.value.toLowerCase() === trimmedType.toLowerCase()
-    );
+    // Call backend to add new type
+    await addQuestionType(trimmedType);
     
-    if (typeExists) {
-      alert("This question type already exists");
-      return;
-    }
-
-    // Send to backend
-    const response = await fetch("https://backend-nox2.onrender.com/add-question-type", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        value: trimmedType,
-        icon: "FileText" // Default icon
-      })
-    });
-
-    if (!response.ok) {
-      throw new Error("Failed to add question type");
-    }
-
-    // Refresh the question types list
-    await fetchQuestionTypes();
+    // Refresh question types from backend
+    const updatedTypes = await fetchQuestionTypes();
+    
+    // Update local state
+    setQuestionTypes(updatedTypes.map((type: { value: any; }) => ({
+      value: type.value,
+      icon: <FileText className="h-5 w-5" />
+    })));
+    
     setNewQuestionType('');
-    alert("Question type added successfully!");
   } catch (error) {
-    console.error("Error adding question type:", error);
-    alert(`Failed to add question type: ${error instanceof Error ? error.message : "Unknown error"}`);
+    console.error('Failed to add question type:', error);
+    // You might want to set an error state here to show to the user
   }
 };
-
 // Dropdown and selection functions
 const toggleDropdown = (type: "skills" | "departments") => {
   setOpenDropdown(openDropdown === type ? null : type);
@@ -476,7 +424,7 @@ const updateQuestion = (roundId: string, questionIndex: number, field: string, v
       const updatedQuestions = [...round.questions];
       
       if (field === "type") {
-        const questionType = QUESTION_TYPES.find(type => type.value === value);
+        const questionType = questionTypes.find(type => type.value === value);
         if (questionType) {
           updatedQuestions[questionIndex] = {
             ...updatedQuestions[questionIndex],
@@ -508,7 +456,7 @@ const updateQuestion = (roundId: string, questionIndex: number, field: string, v
 const addQuestion = (roundId: string) => {
   if (!editedJobRole) return;
   
-  const defaultType = QUESTION_TYPES[0];
+  const defaultType = questionTypes[0];
   const updatedRounds = editedJobRole.interviewRounds.map(round => {
     if (round.id === roundId) {
       return {
@@ -736,7 +684,7 @@ const validateJobData = (): boolean => {
 const addNewJobRole = () => {
   // Generate a unique ID - using Date.now() is better than Math.max for uniqueness
   const newId = Date.now().toString();
-  const defaultType = QUESTION_TYPES[0];
+  const defaultType = questionTypes[0];
   const defaultResourceType = RESOURCE_ICONS[0];
   
   const newJobRole: JobRole = {
@@ -760,9 +708,9 @@ const addNewJobRole = () => {
         duration: "60 minutes",
         questions: [
           {
-            type: defaultType.value,
+            type: defaultType?.value ?? "default-type",
             count: '',
-            icon: defaultType.icon
+            icon: defaultType?.icon ?? "default-icon"
           }
         ]
       }
@@ -1572,209 +1520,195 @@ const tabs = [
       title: 'Interview Process',
       content: (
         <section className="bg-white rounded-lg shadow-md p-6">
+          
+          {/* ... interview rounds content ... */}
           <section className="bg-white rounded-lg shadow-md p-6">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-2xl font-bold">Interview Process</h2>
-              <button
-                onClick={addRound}
-                className="flex items-center gap-1 bg-blue-600 text-white rounded-md px-3 py-1.5 text-sm font-medium hover:bg-blue-700 transition-colors"
-              >
-                <Plus className="h-4 w-4" /> Add Round
-              </button>
+  <div className="flex justify-between items-center mb-4">
+    <h2 className="text-2xl font-bold">Interview Process</h2>
+    <button
+      onClick={addRound}
+      className="flex items-center gap-1 bg-blue-600 text-white rounded-md px-3 py-1.5 text-sm font-medium hover:bg-blue-700 transition-colors"
+    >
+      <Plus className="h-4 w-4" /> Add Round
+    </button>
+  </div>
+
+  <div className="w-full space-y-2">
+    {editedJobRole?.interviewRounds.map((round,index) => (
+      <div key={round.id} className="border rounded-lg overflow-hidden">
+        <button
+          className="flex items-center justify-between w-full p-4 hover:bg-gray-50 transition-colors text-left"
+          onClick={() => setExpandedRound(expandedRound === round.id ? null : round.id)}
+        >
+          <div className="flex items-center">
+            <div className="font-semibold">
+              Round {index+1}: {round.title}
             </div>
-    
-            <div className="w-full space-y-2">
-              {editedJobRole?.interviewRounds.map((round, index) => (
-                <div key={round.id} className="border rounded-lg overflow-hidden">
-                  <button
-                    className="flex items-center justify-between w-full p-4 hover:bg-gray-50 transition-colors text-left"
-                    onClick={() => setExpandedRound(expandedRound === round.id ? null : round.id)}
-                  >
-                    <div className="flex items-center">
-                      <div className="font-semibold">
-                        Round {index + 1}: {round.title}
-                      </div>
-                      <div className="ml-4 flex items-center text-gray-500 text-sm">
-                        <span className="font-medium">Duration:</span>
-                        <span className="ml-1">{round.duration}</span>
-                      </div>
-                    </div>
-    
-                    <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                      <button
-                        onClick={() => removeRound(round.id)}
-                        className="p-1.5 rounded-md hover:bg-gray-100 text-red-600 hover:text-red-800 transition-colors"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                        <span className="sr-only">Delete</span>
-                      </button>
-                      <svg
-                        className={`h-5 w-5 text-gray-500 transform transition-transform ${
-                          expandedRound === round.id ? "rotate-180" : ""
-                        }`}
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </div>
-                  </button>
-    
-                  {expandedRound === round.id && (
-                    <div className="p-4 border-t">
-                      <div className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-sm font-medium mb-1">
-                              Round Title
-                              <span className="text-red-600 ml-1">*</span>
-                            </label>
-                            <input
-                              value={round.title}
-                              onChange={(e) => updateRoundField(round.id, "title", e.target.value)}
-                              className={`w-full px-3 py-2 border ${
-                                jobErrors[`round-${round.id}-title`] ? "border-red-600" : "border-gray-300"
-                              } rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500`}
-                            />
-                            {jobErrors[`round-${round.id}-title`] && (
-                              <p className="text-red-600 text-sm mt-1">{jobErrors[`round-${round.id}-title`]}</p>
-                            )}
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium mb-1">
-                              Duration
-                              <span className="text-red-600 ml-1">*</span>
-                            </label>
-                            <input
-                              value={round.duration}
-                              onChange={(e) => updateRoundField(round.id, "duration", e.target.value)}
-                              className={`w-full px-3 py-2 border ${
-                                jobErrors[`round-${round.id}-duration`] ? "border-red-600" : "border-gray-300"
-                              } rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500`}
-                            />
-                            {jobErrors[`round-${round.id}-duration`] && (
-                              <p className="text-red-600 text-sm mt-1">{jobErrors[`round-${round.id}-duration`]}</p>
-                            )}
-                          </div>
-                        </div>
-    
-                        <div className="space-y-2">
-                          <div className="flex justify-between items-center">
-                            <label className="block text-sm font-medium">
-                              Question Types
-                              <span className="text-red-600 ml-1">*</span>
-                            </label>
-                            <button
-                              onClick={() => addQuestion(round.id)}
-                              className="flex items-center gap-1 bg-white border border-gray-300 rounded-md px-2 py-1 text-sm font-medium hover:bg-gray-50 transition-colors"
-                            >
-                              <Plus className="h-4 w-4" /> Add Question Type
-                            </button>
-                          </div>
-    
-                          {jobErrors[`round-${round.id}-questions`] && (
-                            <div className="flex items-center p-3 text-sm text-red-600 bg-red-50 rounded-md">
-                              <AlertCircle className="h-4 w-4 mr-2" />
-                              <span>{jobErrors[`round-${round.id}-questions`]}</span>
-                            </div>
-                          )}
-    
-                          {round.questions.map((question, qIndex) => (
-                            <div key={qIndex} className="flex items-start gap-2 p-3 border rounded-md">
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 flex-grow">
-                                <div>
-                                  <label className="block text-xs font-medium mb-1">Type</label>
-                                  <div className="flex gap-2">
-                                    <select
-                                      value={question.type}
-                                      onChange={(e) => updateQuestion(round.id, qIndex, "type", e.target.value)}
-                                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
-                                    >
-                                      {questionTypes.map((type) => (
-                                        <option key={type.value} value={type.value}>
-                                          {type.value}
-                                        </option>
-                                      ))}
-                                    </select>
-                                  </div>
-                                </div>
-                                <div>
-                                  <label className="block text-xs font-medium mb-1">
-                                    Number of Questions
-                                    <span className="text-red-600 ml-1">*</span>
-                                  </label>
-                                  <input
-                                    type="number"
-                                    min="1"
-                                    value={question.count}
-                                    onChange={(e) => updateQuestion(round.id, qIndex, "count", e.target.value)}
-                                    className={`w-full px-3 py-2 border ${
-                                      jobErrors[`round-${round.id}-question-${qIndex}-count`] ? "border-red-600" : "border-gray-300"
-                                    } rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm`}
-                                  />
-                                  {jobErrors[`round-${round.id}-question-${qIndex}-count`] && (
-                                    <p className="text-red-600 text-xs mt-1">
-                                      {jobErrors[`round-${round.id}-question-${qIndex}-count`]}
-                                    </p>
-                                  )}
-                                </div>
-                              </div>
-                              <button
-                                onClick={() => removeQuestion(round.id, qIndex)}
-                                className="p-1.5 mt-6 text-red-600 hover:text-red-800 rounded-md hover:bg-gray-100 transition-colors"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                                <span className="sr-only">Remove</span>
-                              </button>
-                            </div>
-                          ))}
-    
-                          {/* Add New Question Type Section */}
-                          <div className="p-4 border rounded-md bg-gray-50">
-                            <h4 className="text-sm font-medium mb-2">Add Custom Question Type</h4>
-                            <div className="flex gap-2">
-                              <input
-                                type="text"
-                                value={newQuestionType}
-                                onChange={(e) => setNewQuestionType(e.target.value)}
-                                placeholder="Enter new question type"
-                                className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
-                              />
-                              <button
-                                onClick={addNewQuestionType}
-                                disabled={!newQuestionType.trim()}
-                                className="flex items-center gap-1 bg-blue-600 text-white px-3 py-2 rounded-md hover:bg-blue-700 transition disabled:bg-gray-300 disabled:cursor-not-allowed text-sm"
-                              >
-                                <Plus className="h-4 w-4" /> Add Type
-                              </button>
-                            </div>
-                            <p className="text-xs text-gray-500 mt-2">
-                              New question types will be available for all rounds
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+            <div className="ml-4 flex items-center text-gray-500 text-sm">
+              <span className="font-medium">Duration:</span>
+              <span className="ml-1">{round.duration}</span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+            <button
+              onClick={() => removeRound(round.id)}
+              className="p-1.5 rounded-md hover:bg-gray-100 text-red-600 hover:text-red-800 transition-colors"
+            >
+              <Trash2 className="h-4 w-4" />
+              <span className="sr-only">Delete</span>
+            </button>
+            <svg
+              className={`h-5 w-5 text-gray-500 transform transition-transform ${
+                expandedRound === round.id ? "rotate-180" : ""
+              }`}
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
+        </button>
+
+        {expandedRound === round.id && (
+          <div className="p-4 border-t">
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    Round Title
+                    <span className="text-red-600 ml-1"></span>
+                  </label>
+                  <input
+                    value={round.title}
+                    onChange={(e) => updateRoundField(round.id, "title", e.target.value)}
+                    className={`w-full px-3 py-2 border ${
+                      jobErrors[`round-${round.id}-title`] ? "border-red-600" : "border-gray-300"
+                    } rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500`}
+                  />
+                  {jobErrors[`round-${round.id}-title`] && (
+                    <p className="text-red-600 text-sm mt-1">{jobErrors[`round-${round.id}-title`]}</p>
                   )}
                 </div>
-              ))}
-    
-              {editedJobRole?.interviewRounds.length === 0 && (
-                <div className="text-center py-8">
-                  <p className="text-gray-500 mb-4">No interview rounds added yet.</p>
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    Duration
+                    <span className="text-red-600 ml-1"></span>
+                  </label>
+                  <input
+                    value={round.duration}
+                    onChange={(e) => updateRoundField(round.id, "duration", e.target.value)}
+                    className={`w-full px-3 py-2 border ${
+                      jobErrors[`round-${round.id}-duration`] ? "border-red-600" : "border-gray-300"
+                    } rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500`}
+                  />
+                  {jobErrors[`round-${round.id}-duration`] && (
+                    <p className="text-red-600 text-sm mt-1">{jobErrors[`round-${round.id}-duration`]}</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <label className="block text-sm font-medium">
+                    Question Types
+                    <span className="text-red-600 ml-1"></span>
+                  </label>
                   <button
-                    onClick={addRound}
-                    className="flex items-center gap-1 mx-auto bg-blue-600 text-white rounded-md px-3 py-1.5 text-sm font-medium hover:bg-blue-700 transition-colors"
+                    onClick={() => addQuestion(round.id)}
+                    className="flex items-center gap-1 bg-white border border-gray-300 rounded-md px-2 py-1 text-sm font-medium hover:bg-gray-50 transition-colors"
                   >
-                    <Plus className="h-4 w-4" /> Add First Round
+                    <Plus className="h-4 w-4" /> Add Question Type
                   </button>
                 </div>
-              )}
+
+                {jobErrors[`round-${round.id}-questions`] && (
+                  <div className="flex items-center p-3 text-sm text-red-600 bg-red-50 rounded-md">
+                    <AlertCircle className="h-4 w-4 mr-2" />
+                    <span>{jobErrors[`round-${round.id}-questions`]}</span>
+                  </div>
+                )}
+
+                {round.questions.map((question, index) => (
+                
+                  <div key={index} className="flex items-start gap-2 p-3 border rounded-md">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 flex-grow">
+                      <div>
+                        <label className="block text-xs font-medium mb-1">Type</label>
+                        <select
+  value={question.type}
+  onChange={(e) => updateQuestion(round.id, index, "type", e.target.value)}
+  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+>
+  {questionTypes.map((type) => (
+    <option key={type.value} value={type.value}>
+      {type.value}
+    </option>
+  ))}
+</select>
+                      </div>
+                      <div className="mt-4">
+<div className="flex items-center gap-2">
+  <input
+    type="text"
+    value={newQuestionType}
+    onChange={(e) => setNewQuestionType(e.target.value)}
+    placeholder="Enter new question type"
+    className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+  />
+  <button
+    onClick={addNewQuestionType}
+    disabled={!newQuestionType.trim()}
+    className="flex items-center gap-1 bg-blue-600 text-white px-3 py-2 rounded-md hover:bg-blue-700 transition disabled:bg-gray-300 disabled:cursor-not-allowed text-sm"
+  >
+    <Plus className="h-4 w-4" /> Add
+  </button>
+</div>
+</div>
+                      <div>
+                        <label className="block text-xs font-medium mb-1">
+                          Number of Questions
+                          <span className="text-red-600 ml-1"></span>
+                        </label>
+                        <input
+                          value={question.count}
+                          onChange={(e) => updateQuestion(round.id, index, "count", e.target.value)}
+                          className={`w-full px-3 py-2 border ${
+                            jobErrors[`round-${round.id}-question-${index}-count`] ? "border-red-600" : "border-gray-300"
+                          } rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm`}
+                        />
+                        {jobErrors[`round-${round.id}-question-${index}-count`] && (
+                          <p className="text-red-600 text-xs mt-1">
+                            {jobErrors[`round-${round.id}-question-${index}-count`]}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => removeQuestion(round.id, index)}
+                      className="p-1.5 mt-6 text-red-600 hover:text-red-800 rounded-md hover:bg-gray-100 transition-colors"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      <span className="sr-only">Remove</span>
+                    </button>
+                  </div>
+                ))}
+              </div>
             </div>
-          </section>
-    
-          <div className="flex justify-between mt-6">
+          </div>
+        )}
+      </div>
+    ))}
+  </div>
+
+  {editedJobRole?.interviewRounds.length === 0 && (
+    <div className="text-center py-8">
+      <p className="text-gray-500 mb-4">No interview rounds added yet.</p>
+    </div>
+  )}
+</section>
+<div className="flex justify-between mt-6">
             <button
               onClick={() => setActiveTab('departments')}
               className="bg-gray-200 text-gray-800 font-medium py-2 px-4 rounded-md hover:bg-gray-300 transition-colors"
@@ -1788,6 +1722,7 @@ const tabs = [
               Next
             </button>
           </div>
+
         </section>
       )
     },

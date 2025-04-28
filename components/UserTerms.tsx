@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from "react";
-import { useRouter, useParams } from "next/navigation"; // Import useRouter and useParams from next/navigation
+import { useRouter, useParams } from "next/navigation";  
 import { ChevronDown, ChevronRight, ExternalLink, Info, Lightbulb, Clock, BookOpen, CheckCircle, Pencil ,Eye,X} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -554,5 +554,4 @@ const UJobPortal = () => {
     </div>
   );
 };
-
 export default UJobPortal;
