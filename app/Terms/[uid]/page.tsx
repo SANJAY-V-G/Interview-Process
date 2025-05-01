@@ -13,7 +13,7 @@ interface EducationRequirements {
 
 interface Question {
   type: string;
-  count: number;
+  count: string;
 }
 
 interface InterviewRound {
@@ -122,7 +122,7 @@ const JobPortal = () => {
   useEffect(() => {
     const fetchJobData = async () => {
       try {
-        const response = await fetch(`https://backend-nox2.onrender.com/get-job/${uid}`);
+        const response = await fetch(`http://127.0.0.1:8000/get-job/${uid}`);
         console.log(response);
 
         if (!response.ok) {
@@ -151,7 +151,7 @@ const JobPortal = () => {
 
   const handleDelete = async () => {
     try {
-      const response = await fetch(`https://backend-nox2.onrender.com/job-delete/${uid}`, {
+      const response = await fetch(`http://127.0.0.1:8000/job-delete/${uid}`, {
         method: 'DELETE',
       });
 

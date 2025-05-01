@@ -180,8 +180,8 @@ export default function Adminedit() {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch(`https://backend-nox2.onrender.com/get-job-data/${uid}`);
-        console.log("Response admin edit:", response); // Log the response object
+        const response = await fetch(`http://127.0.0.1:8000/get-job-data/${uid}`);
+    // Log the response object
         
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -738,12 +738,11 @@ const updateJobField = (field: string, value: string) => {
       setNewDepartment("");
     }
   };
-
   const handleFinalSubmission = async () => {
     setIsSubmitting(true);
     
     try {
-      // Validate all question types first
+      // First, collect all invalid question types
       const invalidQuestionTypes: string[] = [];
       
       jobRoles.forEach(role => {
@@ -757,16 +756,33 @@ const updateJobField = (field: string, value: string) => {
           });
         });
       });
-  
+
+      // Automatically add missing question types
       if (invalidQuestionTypes.length > 0) {
-        setIsSubmitting(false);
-        alert(
-          `The following question types are not recognized and need to be added first:\n\n${invalidQuestionTypes.join(
-            ", "
-          )}\n\nPlease add them in the Interview Process tab.`
-        );
-        setActiveTab('interview');
-        return;
+        // Add each missing question type
+        for (const type of invalidQuestionTypes) {
+          try {
+            const addedType = await addQuestionType(type);
+            
+            // Update local state with the new type
+            setQuestionTypes(prev => [
+              ...prev,
+              {
+                value: addedType.type.value,
+                label: addedType.type.label,
+                default_icon: addedType.type.default_icon
+              }
+            ]);
+          } catch (error) {
+            console.error(`Failed to add question type ${type}:`, error);
+            setIsSubmitting(false);
+            alert(
+              `Failed to automatically add the following question type: ${type}\n\nPlease add it manually in the Interview Process tab.`
+            );
+            setActiveTab('interview');
+            return;
+          }
+        }
       }
   
       // Validate other required fields
@@ -796,7 +812,7 @@ const updateJobField = (field: string, value: string) => {
             duration: round.duration,
             questions: round.questions.map(question => ({
               type: question.type,
-              count: question.count === "N/A" ? "0" : question.count // Handle "N/A" case
+              count: question.count === "N/A" ? "" : question.count // Handle "N/A" case
             }))
           })),
           resources: role.resources.map(res => ({
@@ -810,7 +826,7 @@ const updateJobField = (field: string, value: string) => {
       };
   
       // Submit to backend
-      const response = await fetch(`https://backend-nox2.onrender.com/update-job/${uid}`, {
+      const response = await fetch(`http://127.0.0.1:8000/update-job/${uid}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json"
