@@ -1,7 +1,7 @@
 // src/services/questionTypes.ts
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:8000';
+const API_BASE_URL = 'https://backend-nox2.onrender.com';
 
 export const fetchQuestionTypes = async () => {
   try {
