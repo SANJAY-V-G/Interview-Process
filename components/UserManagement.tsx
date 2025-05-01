@@ -31,7 +31,7 @@ const UserManagement = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch(`http://127.0.0.1:8000/api/get-users?refresh=${Date.now()}`, {
+      const response = await fetch(`https://backend-nox2.onrender.com/api/get-users?refresh=${Date.now()}`, {
         headers: {
           'Cache-Control': 'no-cache',
           'Pragma': 'no-cache'
@@ -53,7 +53,7 @@ const UserManagement = () => {
 
   const updateTempAdminStatus = async (username: string, isTempAdmin: boolean) => {
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/update-user-tempadmin', {
+      const response = await fetch('https://backend-nox2.onrender.com/api/update-user-tempadmin', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',

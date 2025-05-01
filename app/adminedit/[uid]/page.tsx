@@ -180,7 +180,7 @@ export default function Adminedit() {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch(`http://127.0.0.1:8000/get-job-data/${uid}`);
+        const response = await fetch(`https://backend-nox2.onrender.com/get-job-data/${uid}`);
     // Log the response object
         
         if (!response.ok) {
@@ -826,7 +826,7 @@ const updateJobField = (field: string, value: string) => {
       };
   
       // Submit to backend
-      const response = await fetch(`http://127.0.0.1:8000/update-job/${uid}`, {
+      const response = await fetch(`https://backend-nox2.onrender.com/update-job/${uid}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json"

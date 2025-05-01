@@ -50,7 +50,7 @@ const JobList = () => {
         setLoading(true); // Use the original loading state for data fetching
         setError(null);
         try {
-          const response = await fetch('http://127.0.0.1:8000/get-data');
+          const response = await fetch('https://backend-nox2.onrender.com/get-data');
           if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
           }
@@ -81,7 +81,7 @@ const JobList = () => {
   useEffect(() => {
     const fetchJobListings = async () => {
       try {
-        const response = await fetch('http://127.0.0.1:8000/get-data');
+        const response = await fetch('https://backend-nox2.onrender.com/get-data');
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
