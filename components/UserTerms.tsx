@@ -127,7 +127,7 @@ const UJobPortal = () => {
   useEffect(() => {
     const fetchJobData = async () => {
       try {
-        const response = await fetch(`https://backend-nox2.onrender.com/get-job/${uid}`);
+        const response = await fetch(`http://127.0.0.1:8000/get-job/${uid}`);
 
         if (!response.ok) {
           throw new Error('Job not found');
